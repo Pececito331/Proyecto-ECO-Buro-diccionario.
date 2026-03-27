@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buro-Diccionario IA | Proyecto ECO UHU</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --primary-purple: #6A29FF;
+            --light-purple: #D9C5FF;
+            --deep-purple: #4C00D1;
+            --bg-gray: #F8F9FA;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: var(--bg-gray);
+            color: #1a1a1a;
+            scroll-behavior: smooth;
+        }
+
+        .header-bg {
+            background: linear-gradient(135deg, var(--deep-purple) 0%, var(--primary-purple) 100%);
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(106, 41, 255, 0.1);
+        }
+
+        .ai-input:focus {
+            outline: none;
+            border-color: var(--primary-purple);
+            box-shadow: 0 0 0 4px rgba(106, 41, 255, 0.1);
+        }
+
+        .term-item {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .term-item:hover {
+            background-color: #f3f0ff;
+            transform: translateX(5px);
+        }
+
+        .loading-dots:after {
+            content: '.';
+            animation: dots 1.5s steps(5, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60% { content: '...'; }
+            80%, 100% { content: ''; }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Header / Branding -->
+    <header class="header-bg text-white pt-12 pb-24 px-6 shadow-2xl relative overflow-hidden">
+        <div class="max-w-4xl mx-auto text-center relative z-10">
+            <div class="inline-block bg-white/20 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-6">
+                Mediación Lingüística Digital
+            </div>
+            <h1 class="text-4xl md:text-6xl font-extrabold mb-4">BURO-DICCIONARIO IA</h1>
+            <p class="text-lg opacity-90 max-w-2xl mx-auto font-light">
+                Herramienta de Lectura Fácil para la ciudadanía de Huelva.
+            </p>
+        </div>
+        <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>
+    </header>
+
+    <main class="flex-grow max-w-5xl mx-auto px-4 -mt-16 relative z-20 pb-20">
+        
+        <!-- IA Translator Box -->
+        <section class="glass-card p-8 md:p-12 rounded-[3rem] shadow-2xl mb-12 border-t-4 border-purple-400">
+            <div class="flex items-center gap-4 mb-8">
+                <div class="bg-purple-600 text-white p-3 rounded-2xl shadow-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-bold text-purple-900 font-[Poppins]">Simplificador Inteligente</h2>
+                    <p class="text-sm text-gray-500">Pega un párrafo de una carta oficial y la IA lo traducirá.</p>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                <textarea id="aiInput" class="ai-input w-full p-6 bg-gray-50 border-2 border-gray-100 rounded-3xl text-lg h-32 resize-none transition-all" placeholder="Ej: 'Se le comunica que la resolución ha sido desestimada por no haber subsanado los errores en el plazo preceptivo...'"></textarea>
+                
+                <button onclick="translateWithAI()" id="btnTranslate" class="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-2xl transition-all shadow-lg hover:shadow-purple-200 flex items-center justify-center gap-2">
+                    <span id="btnText">Traducir a Lectura Fácil</span>
+                </button>
+
+                <!-- Área de respuesta de la IA -->
+                <div id="aiResponse" class="hidden mt-8 p-8 bg-purple-50 rounded-3xl border border-purple-100 animate-fade-in">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="bg-purple-200 text-purple-700 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-widest">Resultado de Mediación IA</span>
+                    </div>
+                    <p id="aiResultText" class="text-xl text-purple-900 font-medium leading-relaxed"></p>
+                    <div class="mt-4 pt-4 border-t border-purple-200 flex justify-between items-center text-xs text-purple-400 italic">
+                        <span>Generado para Proyecto ECO - UHU</span>
+                        <button onclick="copyResult()" class="hover:text-purple-600 font-bold uppercase transition-colors">Copiar texto</button>
+                    </div>
+                </div>
+
+                <!-- Mensaje de error (oculto por defecto) -->
+                <div id="errorMessage" class="hidden mt-4 p-4 bg-red-50 text-red-700 rounded-2xl border border-red-100 text-sm text-center">
+                    Lo siento, ha ocurrido un problema al conectar con el servidor de IA. Asegúrate de estar usando el visor 'Preview' para que la conexión funcione.
+                </div>
+            </div>
+        </section>
+
+        <!-- Dictionary Section -->
+        <section class="grid md:grid-cols-3 gap-10">
+            <div class="md:col-span-1 space-y-4">
+                <h3 class="text-xl font-bold text-purple-900 px-4 font-[Poppins]">Glosario ECO</h3>
+                <div id="termsList" class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden"></div>
+            </div>
+
+            <div class="md:col-span-2">
+                <div id="meaningDisplay" class="bg-white p-12 rounded-[3rem] shadow-sm border border-gray-100 h-full flex flex-col items-center justify-center text-center">
+                    <div id="emptyState">
+                        <span class="text-6xl mb-6 block opacity-20">📖</span>
+                        <h4 class="text-xl font-bold text-gray-300 italic">Selecciona un término del glosario</h4>
+                    </div>
+                    <div id="contentState" class="hidden text-left w-full">
+                        <span class="bg-green-100 text-green-700 text-[10px] font-bold px-3 py-1 rounded-full uppercase mb-4 inline-block tracking-tighter">Traducción Ciudadana</span>
+                        <h4 id="displayTerm" class="text-4xl font-extrabold text-purple-900 mb-4 font-[Poppins]"></h4>
+                        <div class="h-1 bg-purple-100 w-16 mb-6"></div>
+                        <p id="displayMeaning" class="text-2xl text-gray-700 leading-relaxed mb-8"></p>
+                        <div class="bg-purple-50 p-6 rounded-2xl border-l-4 border-purple-400">
+                            <h5 class="text-xs font-bold text-purple-500 uppercase mb-2 tracking-widest">Ejemplo de uso:</h5>
+                            <p id="displayExample" class="text-gray-600 italic"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-purple-900 text-white py-12 px-6 mt-auto">
+        <div class="max-w-4xl mx-auto text-center space-y-4">
+            <p class="text-sm uppercase tracking-widest opacity-60 font-bold">Proyecto ECO: Explora, Crea, Ofrece</p>
+            <div class="text-lg font-medium">
+                Eduardo Vizcaíno Gómez • Grado en Estudios Ingleses • UHU
+            </div>
+            <p class="text-xs opacity-40">Docente: Coronada Sánchez • Curso 2025/26</p>
+        </div>
+    </footer>
+
+    <script>
+        // Configuración de la IA
+        const apiKey = ""; // El entorno inyectará la clave aquí automáticamente
+        const systemPrompt = "Eres un experto en mediación lingüística y Lectura Fácil para la administración pública en España. Recibirás fragmentos de cartas oficiales, términos jurídicos o notificaciones burocráticas. Tu tarea es 'traducirlas' a un lenguaje extremadamente sencillo, directo y humano para que un ciudadano (incluso personas mayores o con poco hábito de lectura) las entienda perfectamente. Evita tecnicismos y ve al grano con el mensaje principal.";
+
+        const dictionaryData = [
+            { term: "Apercibir", easy: "Es un aviso o advertencia seria de que debes hacer algo.", example: "Se le apercibe de que debe desalojar el local." },
+            { term: "Diligencia", easy: "Cualquier gestión, papeleo o actuación oficial.", example: "La diligencia judicial ha terminado con éxito." },
+            { term: "Desestimar", easy: "Es la forma oficial de decir 'NO' a lo que has pedido.", example: "Su solicitud de beca ha sido desestimada." },
+            { term: "Subsanar", easy: "Arreglar un error o completar algo que faltaba en tus papeles.", example: "Debe subsanar los errores en su declaración." },
+            { term: "Pernoctar", easy: "Pasar la noche en un sitio.", example: "Está prohibido pernoctar en la playa." },
+            { term: "Preceptivo", easy: "Que es obligatorio por ley.", example: "Este trámite es preceptivo para obtener la licencia." },
+            { term: "Interponer", easy: "Presentar formalmente una queja, recurso o demanda.", example: "Voy a interponer un recurso contra esta multa." }
+        ];
+
+        // Renderizar glosario
+        const listContainer = document.getElementById('termsList');
+        dictionaryData.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = 'term-item p-5 border-b border-gray-50 flex justify-between items-center';
+            div.innerHTML = `<span class="font-bold text-gray-700">${item.term}</span><span class="text-purple-300">→</span>`;
+            div.onclick = () => showTerm(index);
+            listContainer.appendChild(div);
+        });
+
+        function showTerm(index) {
+            const item = dictionaryData[index];
+            document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('contentState').classList.remove('hidden');
+            document.getElementById('displayTerm').innerText = item.term;
+            document.getElementById('displayMeaning').innerText = item.easy;
+            document.getElementById('displayExample').innerText = item.example;
+        }
+
+        async function translateWithAI() {
+            const input = document.getElementById('aiInput').value.trim();
+            if (!input) return;
+
+            const btn = document.getElementById('btnTranslate');
+            const btnText = document.getElementById('btnText');
+            const responseBox = document.getElementById('aiResponse');
+            const resultText = document.getElementById('aiResultText');
+            const errorBox = document.getElementById('errorMessage');
+
+            // Reset UI
+            errorBox.classList.add('hidden');
+            responseBox.classList.add('hidden');
+            btn.disabled = true;
+            btnText.innerHTML = `<span class="loading-dots">Simplificando</span>`;
+            
+            try {
+                // Llamada a la API con sistema de reintentos
+                const response = await fetchWithExponentialBackoff(
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: input }] }],
+                            systemInstruction: { parts: [{ text: systemPrompt }] }
+                        })
+                    }
+                );
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error?.message || "Error en la respuesta del servidor.");
+                }
+
+                const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (text) {
+                    resultText.innerText = text;
+                    responseBox.classList.remove('hidden');
+                    responseBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } else {
+                    throw new Error("No se pudo obtener una respuesta válida.");
+                }
+
+            } catch (error) {
+                console.error("Error en la llamada a la IA:", error);
+                errorBox.classList.remove('hidden');
+            } finally {
+                btn.disabled = false;
+                btnText.innerText = "Traducir a Lectura Fácil";
+            }
+        }
+
+        // Función de fetch con exponencial backoff (1s, 2s, 4s, 8s, 16s)
+        async function fetchWithExponentialBackoff(url, options) {
+            const delays = [1000, 2000, 4000, 8000, 16000];
+            let lastError;
+
+            for (let i = 0; i <= delays.length; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    
+                    // Si es un error de cuota o servidor, reintentamos. Si es un error 400/403, devolvemos para manejarlo.
+                    if (response.ok || (response.status !== 429 && response.status < 500)) {
+                        return response;
+                    }
+                } catch (err) {
+                    lastError = err;
+                }
+
+                if (i < delays.length) {
+                    await new Promise(res => setTimeout(res, delays[i]));
+                }
+            }
+            throw lastError || new Error("Fallo tras varios intentos de conexión.");
+        }
+
+        function copyResult() {
+            const text = document.getElementById('aiResultText').innerText;
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                alert("¡Texto copiado al portapapeles!");
+            } catch (err) {
+                console.error('Error al copiar', err);
+            }
+            document.body.removeChild(textArea);
+        }
+    </script>
+</body>
+</html>
